@@ -1,10 +1,7 @@
 package mobileTesting.guru99;
 
-import com.codeborne.selenide.SelenideElement;
 import io.appium.java_client.AppiumDriver;
 import org.openqa.selenium.By;
-
-import static com.codeborne.selenide.Selenide.*;
 
 public class HomePage extends BasePage {
 
