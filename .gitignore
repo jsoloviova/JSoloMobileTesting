@@ -1,0 +1,12 @@
+*.jar
+*.war
+*.ear
+.idea/
+*.iml
+*.iws
+log/
+target/
+bin/
+build/
+/bin1/
+java/build/**
