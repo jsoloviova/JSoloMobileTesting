@@ -20,7 +20,7 @@ public class MySQLTest {
 
     Connection connection = null;
     Statement statement;
-    String url = dbAddress + userPass + "***";
+    String url = dbAddress + userPass + "Greensun8506!";
 
     // 1. CREATE DATABASE
     @BeforeClass
@@ -46,7 +46,7 @@ public class MySQLTest {
 
     @BeforeMethod
     public void setConnection() throws SQLException, ClassNotFoundException {
-        connection = DriverManager.getConnection(dbAddress + dbName + userPass + "***");
+        connection = DriverManager.getConnection(dbAddress + dbName + userPass + "Greensun8506!");
         Class.forName(jdbcDriver);
         statement = connection.createStatement();
     }
@@ -141,7 +141,7 @@ public class MySQLTest {
             statement.executeUpdate("UPDATE " + dbName + "." + tName + " SET skill = 'Sales assistant' WHERE idNo = 3;");
             ResultSet resultSet = statement.executeQuery("SELECT * FROM " + dbName + "." + tName + " WHERE idNo = 3;");
 
-            // not sure about it:
+            // not sure about this:
             assertTrue(resultSet.rowUpdated());
         } catch (SQLException e) {
             e.printStackTrace();
@@ -188,7 +188,7 @@ public class MySQLTest {
             System.out.println();
             ResultSet resultSet = statement.executeQuery("SELECT * FROM " + dbName + "." + tName + " WHERE idNo = 3;");
 
-            // not sure about it:
+            // not sure about this:
             assertTrue(resultSet.rowDeleted());
         } catch (SQLException e) {
             e.printStackTrace();
@@ -237,10 +237,17 @@ public class MySQLTest {
     public void dropTable() {
         try {
             statement.execute("DROP TABlE " + tName);
-            ResultSet resultSet = connection.getMetaData().getTables(dbName, null, "%", null);
-
-            assertFalse(resultSet.getMetaData().getTableName(3).contains("friends"));
-            System.out.println("Database deleted successfully");
+            String[] types = { "TABLE" };
+            DatabaseMetaData dbMetaData = connection.getMetaData();
+            ResultSet tables = dbMetaData.getTables(dbName, null, "%", types);
+            while(tables.next())
+            {
+                System.out.println("tables  =  " + tables.getString(3));
+                assertFalse(tables.getString(3).contains("friends"), "Table 'friends' was not dropped!");
+            }
+//            ResultSet resultSet = connection.getMetaData().getTables(dbName, null, "%", null);
+//            assertFalse(resultSet.getMetaData().getTableName(3).contains("friends"));
+            System.out.println("Table 'friends' deleted successfully");
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -258,10 +265,16 @@ public class MySQLTest {
     public void dropDB() {
         try {
             statement.execute("DROP DATABASE " + dbName);
-            statement.execute("SHOW DATABASES");
-            System.out.println("Database deleted successfully");
-            ResultSet resultSet = connection.getMetaData().getTables("%", null, null, null);
-            assertFalse(resultSet.getMetaData().getCatalogName(3).contains("aqahillel"));
+            DatabaseMetaData dbMetaData = connection.getMetaData();
+            ResultSet catalogs = dbMetaData.getCatalogs();
+            while(catalogs.next())
+            {
+                System.out.println("catalogs  =  " + catalogs.getString(1));
+                assertFalse(catalogs.getString(1).contains(dbName), "DB 'aqahillel' was not dropped!");
+            }
+            System.out.println("Database 'aqahillel' deleted successfully");
+//            ResultSet resultSet = connection.getMetaData().getCatalogs();
+//            assertFalse(resultSet.getMetaData().getCatalogName(3).contains("aqahillel"));
 
         } catch (SQLException e) {
             e.printStackTrace();
