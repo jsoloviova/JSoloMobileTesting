@@ -1,37 +1,60 @@
 package mySQL;
 
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.testng.Assert.*;
+
 public class MySQLTest {
 
-    public static void main(String[] args) throws ClassNotFoundException {
-        String jdbcDriver = "com.mysql.jdbc.Driver";
-        String dbAddress = "jdbc:mysql://localhost:3306/";
-        String userPass = "?user=root&password=";
-        String dbName = "aqahillel";
-        String tName = "friends";
-        String userName = "root";
-        String password = "";
+    String jdbcDriver = "com.mysql.jdbc.Driver";
+    String dbAddress = "jdbc:mysql://localhost:3306/";
+    String userPass = "?user=root&password=";
+    String dbName = "aqahillel";
+    String tName = "friends";
 
-        Connection connection = null;
-        String url = dbAddress + userPass + "///";
+    Connection connection = null;
+    Statement statement;
+    String url = dbAddress + userPass + "Greensun8506!";
 
+    // 1. CREATE DATABASE
+    @BeforeClass
+    public void createDB() {
         try {
-            // 1. CREATE DATABASE
             connection = DriverManager.getConnection(url);
-            Statement statement = connection.createStatement();
+            statement = connection.createStatement();
             statement.executeUpdate("CREATE DATABASE " + dbName);
 
             if (connection != null) {
                 System.out.println("Connected to the database");
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                connection.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
 
-            // 2. CREATE TABLE
-            Class.forName(jdbcDriver);
-            connection = DriverManager.getConnection(dbAddress + dbName + userPass + "///");
-            Statement statement1 = connection.createStatement();
+    @BeforeMethod
+    public void setConnection() throws SQLException, ClassNotFoundException {
+        connection = DriverManager.getConnection(dbAddress + dbName + userPass + "Greensun8506!");
+        Class.forName(jdbcDriver);
+        statement = connection.createStatement();
+    }
+
+    // 2. CREATE TABLE
+    @Test
+    public void createTable() {
+        try {
             String table = "CREATE TABLE " + tName + " ("
                     + "idNo INT(6) NOT NULL AUTO_INCREMENT,"
                     + "name VARCHAR(255),"
@@ -39,81 +62,206 @@ public class MySQLTest {
                     + "skill VARCHAR(255), "
                     + "PRIMARY KEY(idNo))";
 
-            statement1.executeUpdate(table);
+            statement.executeUpdate(table);
             System.out.println("Table Created");
+//            Set<String> s = fr.listTables(db);
+//            assertEquals(1, s.size());
 
-            // 3. INSERT
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                connection.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    // 3. INSERT
+    @Test(dependsOnMethods = "createTable")
+    public void insertValuesToTable() {
+        try {
             String sql = "INSERT INTO " + tName + " VALUES (1, 'Monica', 26, 'Chef')";
-            statement1.executeUpdate(sql);
+            statement.executeUpdate(sql);
             sql = "INSERT INTO " + tName +
                     " VALUES (2, 'Phoebe', 28, 'Masseur')";
-            statement1.executeUpdate(sql);
+            statement.executeUpdate(sql);
             sql = "INSERT INTO " + tName +
                     " VALUES (3, 'Rachel', 26, 'Waitress')";
-            statement1.executeUpdate(sql);
+            statement.executeUpdate(sql);
             System.out.println("Inserted records into the table:");
 
-            // 4. SELECT
-            Statement statement2 = connection.createStatement();
-            ResultSet resultSet = statement1.executeQuery("SELECT * FROM " + dbName + "." + tName + ";");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                connection.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    // 4. SELECT
+    @Test(dependsOnMethods = "insertValuesToTable")
+    public void checkInsertedValues() {
+        try {
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM " + dbName + "." + tName + ";");
 
             List allRows = new ArrayList();
             int numberColumns = 4;
             while (resultSet.next()) {
                 String[] currentRow = new String[numberColumns];
-                for(int i = 1; i <= numberColumns; i++) {
-                    currentRow[i-1]=resultSet.getString(i);
-                    System.out.print(currentRow[i-1] + " ");
+                for (int i = 1; i <= numberColumns; i++) {
+                    currentRow[i - 1] = resultSet.getString(i);
+                    System.out.print(currentRow[i - 1] + " ");
+                }
+                System.out.println();
+                assertTrue(allRows.add(currentRow));
+            }
+            assertEquals(allRows.size(), 3);
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                connection.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    // 5. UPDATE
+    @Test(dependsOnMethods = "checkInsertedValues")
+    public void updateTable() {
+        try {
+            statement.executeUpdate("UPDATE " + dbName + "." + tName + " SET skill = 'Sales assistant' WHERE idNo = 3;");
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM " + dbName + "." + tName + " WHERE idNo = 3;");
+
+            // not sure about it:
+            assertTrue(resultSet.rowUpdated());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                connection.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    // 6. SELECT
+    @Test(dependsOnMethods = "updateTable")
+    public void checkUpdatedTable() {
+        try {
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM " + dbName + "." + tName + " WHERE idNo = 3;");
+            int numberColumns = 4;
+            System.out.println("\nChanges for Rachel:");
+            while (resultSet.next()) {
+                String[] currentRow = new String[numberColumns];
+                for (int i = 1; i <= numberColumns; i++) {
+                    currentRow[3] = resultSet.getString(i);
+                    System.out.print(currentRow[3] + " ");
+                }
+                assertEquals(resultSet.getString(4), "Sales assistant");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                connection.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    // 7. DELETE
+    @Test(dependsOnMethods = "checkUpdatedTable")
+    public void deleteRowInTable() {
+        try {
+            statement.executeUpdate("DELETE FROM " + dbName + "." + tName + " WHERE idNo = 3;");
+            System.out.println();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM " + dbName + "." + tName + " WHERE idNo = 3;");
+
+            // not sure about it:
+            assertTrue(resultSet.rowDeleted());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                connection.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    // 8. SELECT
+    @Test(dependsOnMethods = "deleteRowInTable")
+    public void checkRowWasDeleted() {
+        try {
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM " + dbName + "." + tName + ";");
+
+            List allRows = new ArrayList();
+            int numberColumns = 4;
+            System.out.println("\nDelete Rachel:");
+            while (resultSet.next()) {
+                String[] currentRow = new String[numberColumns];
+                for (int i = 1; i <= numberColumns; i++) {
+                    currentRow[i - 1] = resultSet.getString(i);
+                    System.out.print(currentRow[i - 1] + " ");
                 }
                 System.out.println();
                 allRows.add(currentRow);
             }
+            assertEquals(allRows.size(), 2);
 
-            // 5. UPDATE
-            statement1.executeUpdate("UPDATE " + dbName + "." + tName + " SET skill = 'Sales assistant' WHERE idNo = 3;");
-
-            // 6. SELECT
-            ResultSet resultSet1 = statement1.executeQuery("SELECT * FROM " + dbName + "." + tName + " WHERE idNo = 3;");
-            int numberColumns1 = 4;
-            System.out.println("\nChanges for Rachel:");
-            while (resultSet1.next()) {
-                String[] currentRow1 = new String[numberColumns1];
-                for(int i = 1; i <= numberColumns1; i++) {
-                    currentRow1[3]=resultSet1.getString(i);
-                    System.out.print(currentRow1[3] + " ");
-                }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                connection.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
             }
+        }
+    }
 
-            // 7. DELETE
-            statement1.executeUpdate("DELETE FROM " + dbName + "." + tName + " WHERE idNo = 3;");
-            System.out.println();
+    // 9. DROP TABLE
+    @Test(dependsOnMethods = "checkRowWasDeleted")
+    public void dropTable() {
+        try {
+            statement.execute("DROP TABlE " + tName);
+            ResultSet resultSet = connection.getMetaData().getTables(dbName, null, "%", null);
 
-            // 8. SELECT
-            ResultSet resultSet2 = statement1.executeQuery("SELECT * FROM " + dbName + "." + tName + ";");
-
-            List allRows1 = new ArrayList();
-            int numberColumns2 = 4;
-            System.out.println("\nDelete Rachel:");
-            while (resultSet2.next()) {
-                String[] currentRow2 = new String[numberColumns2];
-                for(int i = 1; i <= numberColumns2; i++) {
-                    currentRow2[i-1]=resultSet2.getString(i);
-                    System.out.print(currentRow2[i-1] + " ");
-                }
-                System.out.println();
-                allRows1.add(currentRow2);
-            }
-
-            // 9. DROP TABLE
-            statement1.execute("DROP TABlE " + tName);
-            System.out.println("Database deleted successfully\nDB tables:");
-            statement1.execute("SHOW TABLES");
-
-            // 10. DROP DB
-            statement1.execute("DROP DATABASE " + dbName);
-            statement1.execute("SHOW DATABASES");
+            assertFalse(resultSet.getMetaData().getTableName(3).contains("friends"));
             System.out.println("Database deleted successfully");
 
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                connection.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    // 10. DROP DB
+    @Test(dependsOnMethods = "dropTable")
+    public void dropDB() {
+        try {
+            statement.execute("DROP DATABASE " + dbName);
+            statement.execute("SHOW DATABASES");
+            System.out.println("Database deleted successfully");
+            ResultSet resultSet = connection.getMetaData().getTables("%", null, null, null);
+            assertFalse(resultSet.getMetaData().getCatalogName(3).contains("aqahillel"));
 
         } catch (SQLException e) {
             e.printStackTrace();
