@@ -20,7 +20,7 @@ public class MySQLTest {
 
     Connection connection = null;
     Statement statement;
-    String url = dbAddress + userPass + "Greensun8506!";
+    String url = dbAddress + userPass + "***";
 
     // 1. CREATE DATABASE
     @BeforeClass
@@ -46,7 +46,7 @@ public class MySQLTest {
 
     @BeforeMethod
     public void setConnection() throws SQLException, ClassNotFoundException {
-        connection = DriverManager.getConnection(dbAddress + dbName + userPass + "Greensun8506!");
+        connection = DriverManager.getConnection(dbAddress + dbName + userPass + "***");
         Class.forName(jdbcDriver);
         statement = connection.createStatement();
     }
